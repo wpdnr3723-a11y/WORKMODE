@@ -1,7 +1,8 @@
 """2층 단독주택 + 대지 모델 (text-to-cad / build123d).
 
 좌표: X = 동(東), Y = 북(北), Z = 위. 모델 단위는 mm이고, 아래 치수는 m로 쓰고 M()으로 바꾼다.
-대지: 경기도 용인시 기흥구 제1종일반주거지역의 가상 필지 15 m x 20 m (300 ㎡), 남측 6 m 도로.
+대지: 경기도 성남시 분당구 운중동(서판교 단독주택단지), 제1종전용주거지역·지구단위계획구역.
+     지번은 토지이음에서 확인해 채운다. 대지 형상은 대표 필지 15 m x 20 m (300 ㎡), 남측 6 m 도로로 가정.
 법규 검토 수치는 house/check.py가 이 파일의 상수로 계산한다.
 """
 
@@ -230,12 +231,12 @@ def site():
         for dx in (0, PARK_W):
             lines.append(box(px + dx - 0.05, py, GL + 0.03, px + dx + 0.05, py + PARK_D, GL + 0.04))
     stripes = tag(bd.Compound(children=lines), "parking_2x_2.5x5.0", "#ffffff")
-    # 담장 1.2 m: 서·북·동 경계 (남측 도로변은 열어 둔다)
+    # 생울타리 1.2 m (지구단위계획: 막힌 담장 대신 생울타리·투시형): 서·북·동 경계
     fence = tag(bd.Compound(children=[
-        box(0, 0, GL, 0.15, LOT_D, 1.2),
-        box(0, LOT_D - 0.15, GL, LOT_W, LOT_D, 1.2),
-        box(LOT_W - 0.15, 9.0, GL, LOT_W, LOT_D, 1.2),
-    ]), "fence_1200", "#9a8f80")
+        box(0, 0, GL, 0.6, LOT_D, 1.2),
+        box(0, LOT_D - 0.6, GL, LOT_W, LOT_D, 1.2),
+        box(LOT_W - 0.6, 9.0, GL, LOT_W, LOT_D, 1.2),
+    ]), "hedge_1200", "#5e8f45")
     trees = []
     for x, y, h in [(1.6, 1.6, 4.0), (5.0, 1.4, 3.2), (1.4, 6.5, 3.6), (13.0, 18.5, 4.2), (3.0, 18.6, 3.8)]:
         trunk = bd.Pos(M(x), M(y), 0) * bd.Cylinder(120, M(h * 0.5), align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
@@ -265,7 +266,7 @@ def house():
             f = fills(b, ops, kind, f"{kind}s_{n}", color)
             if f is not None:
                 parts.append(f)
-    return bd.Compound(children=parts, label="house_yongin_300m2")
+    return bd.Compound(children=parts, label="house_seopangyo_unjung_300m2")
 
 
 if __name__ == "__main__":
