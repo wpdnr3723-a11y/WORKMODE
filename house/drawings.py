@@ -597,10 +597,8 @@ def plan_legend(sh, y=240):
 
 
 
-def plan_sheet(book, floor):
-    no = f"A-20{floor}"
-    sh = Sheet(book, no, f"{floor}층 평면도", "1/50")
-    v = sh.view(*PLAN_O, 50, u0=1.5, v0=9.0)
+def plan_draw(sh, floor, o=PLAN_O):
+    v = sh.view(*o, 50, u0=1.5, v0=9.0)
     fl = S.FL1 if floor == 1 else S.FL2
     b = S.B1 if floor == 1 else S.B2
     x0, y0, x1, y1 = S.B1
@@ -639,6 +637,13 @@ def plan_sheet(book, floor):
         v.hdim([1.8, 7.5, 7.65, 9.95, 10.1, 12.2], 14.65, size=1.6)
     else:
         v.hdim([3.8, 5.5, 5.65, 7.5, 7.65, 9.95, 10.1, 12.2], 15.35, size=1.6)
+    return v
+
+
+def plan_sheet(book, floor):
+    no = f"A-20{floor}"
+    sh = Sheet(book, no, f"{floor}층 평면도", "1/50")
+    v = plan_draw(sh, floor)
     lev = "1FL : GL+300" if floor == 1 else "2FL : GL+3,300"
     sh.heading(20, 398, f"{floor}층 평면도", "1/50", num=str(floor))
     sh.text(30, 384, f"바닥 레벨 {lev}   |   바닥면적 {(S.AREA_1F if floor == 1 else S.AREA_2F):.2f}㎡ (외벽 중심선)", 2.2)
@@ -665,9 +670,8 @@ def plan_sheet(book, floor):
 
 
 # ---------------------------------------------------------------- 지붕 평면도
-def roof_sheet(book):
-    sh = Sheet(book, "A-203", "지붕 평면도", "1/50")
-    v = sh.view(*PLAN_O, 50, u0=1.5, v0=9.0)
+def roof_draw(sh, o=PLAN_O):
+    v = sh.view(*o, 50, u0=1.5, v0=9.0)
     x0, y0, x1, y1 = S.B2
     ex0, ex1, ey0, ey1 = x0 - S.EAVE, x1 + S.EAVE, y0 - S.EAVE, y1 + S.EAVE
     grid_lines(v, (S.B1[0] - 2.9, S.B1[2] + 2.3), (S.B1[1] - 2.9, S.B1[3] + 2.3))
@@ -697,6 +701,12 @@ def roof_sheet(book):
     v.hdim([tx0, ex1], ey0 - 1.5)
     v.vdim([ey0, y0, y1, ey1], tx0 - 0.8, ext=ex0)
     v.vdim([ey0, ey1], tx0 - 1.4)
+    return v
+
+
+def roof_sheet(book):
+    sh = Sheet(book, "A-203", "지붕 평면도", "1/50")
+    v = roof_draw(sh)
     sh.heading(20, 398, "지붕 평면도", "1/50", num="3")
     sh.north(560, 380)
     plan_notes(sh, ["1. 지붕: 아스팔트 싱글 / 자착식 방수시트 / OSB 11 / 통기층 30",
@@ -710,9 +720,8 @@ def roof_sheet(book):
 
 
 # ---------------------------------------------------------------- 배치도
-def site_sheet(book):
-    sh = Sheet(book, "A-101", "배치도", "1/100")
-    v = sh.view(110, 120, 100)
+def site_draw(sh, o=(110, 120), scale=100):
+    v = sh.view(*o, scale)
     L, D = S.LOT_W, S.LOT_D
     v.rect(-4, -S.ROAD_W, L + 4, 0, fc="#e4e4e4", ec="none", z=1)
     v.line([(-4, -S.ROAD_W), (L + 4, -S.ROAD_W)], lw="thin")
@@ -768,6 +777,12 @@ def site_sheet(book):
     v.text(5.0, 17.85, f"조경 {(S.NORTH_GARDEN[2] - S.NORTH_GARDEN[0]) * (S.NORTH_GARDEN[3] - S.NORTH_GARDEN[1]):.2f}㎡",
            2.0, bg="#dff0d0")
     v.text(0.3, 12.0, "생울타리 H1,200", 1.6, rot=90, color="#3d7a2a")
+    return v
+
+
+def site_sheet(book):
+    sh = Sheet(book, "A-101", "배치도", "1/100")
+    v = site_draw(sh)
     sh.heading(20, 398, "배치도", "1/100")
     sh.north(330, 380)
     rows = [("항목", "내용"),
@@ -927,14 +942,12 @@ def elev_notes(v, which, tx):
         last = ty
 
 
-def elevation_sheet(book, no, which):
-    names = {"S": "남측 입면도", "N": "북측 입면도", "E": "동측 입면도", "W": "서측 입면도"}
-    sh = Sheet(book, no, names[which], "1/50")
+def elevation_draw(sh, which, org=(70, 120), scale=50, notes_dx=62):
     if which in "SN":
         umin = 0.9 if which == "S" else S.LOT_W - 13.1
     else:
         umin = 8.4 if which == "E" else S.LOT_D - 17.6
-    v = sh.view(70, 120, 50, u0=umin)
+    v = sh.view(*org, scale, u0=umin)
     umin_, umax, _ = elevation(sh, v, which)
     for o in S.OPENINGS:                                 # 창호 기호
         if o["wall"] != which:
@@ -947,7 +960,14 @@ def elevation_sheet(book, no, which):
         sh.ax.add_patch(MPoly([(x - 4, y - 1.8), (x + 4, y - 1.8), (x + 4, y + 1.8), (x - 4, y + 1.8)], closed=True,
                               fc="white", ec="k", lw=LW["thin"] * PT, zorder=8))
         sh.text(x, y, o["id"], 1.9, ha="center")
-    elev_notes(v, which, v.P(umax, 0)[0] + 62)
+    elev_notes(v, which, v.P(umax, 0)[0] + notes_dx)
+    return v
+
+
+def elevation_sheet(book, no, which):
+    names = {"S": "남측 입면도", "N": "북측 입면도", "E": "동측 입면도", "W": "서측 입면도"}
+    sh = Sheet(book, no, names[which], "1/50")
+    elevation_draw(sh, which)
     sh.heading(20, 398, names[which], "1/50", num={"S": "1", "N": "2", "E": "3", "W": "4"}[which])
     sh.text(440, 140, "외부 마감 사항", 2.8, weight="bold")
     fin = ["외벽: 스터코(준불연) 백색, 하부 걸레받이 화강석 THK30 H300",
@@ -1038,8 +1058,8 @@ def roof_section_cross(v, u_of_y):
     return rc, ins, top
 
 
-def section_A(sh):
-    v = sh.view(80, 125, 50, u0=0.5, v0=-2.7)
+def section_A(sh, o=(80, 125)):
+    v = sh.view(*o, 50, u0=0.5, v0=-2.7)
     y = SEC_A_Y
     earth(v, 0.6, 13.4)
     x0, _, x1, _ = S.B1
@@ -1117,8 +1137,8 @@ def section_A(sh):
     return v
 
 
-def section_B(sh):
-    v = sh.view(80, 125, 50, u0=7.6, v0=-2.7)
+def section_B(sh, o=(80, 125)):
+    v = sh.view(*o, 50, u0=7.6, v0=-2.7)
     xc = SEC_B_X
     _, y0, _, y1 = S.B1
     earth(v, 7.7, 18.3)
@@ -1195,10 +1215,8 @@ def section_B(sh):
     return v
 
 
-def section_sheet(book, which):
-    no = "A-401" if which == "A" else "A-402"
-    sh = Sheet(book, no, f"단면도 {which}-{which}'", "1/50")
-    v = section_A(sh) if which == "A" else section_B(sh)
+def section_draw(sh, which, o=(80, 125)):
+    v = section_A(sh, o) if which == "A" else section_B(sh, o)
     if which == "A":
         lo, hi, grid = 1.5, 12.5, S.GRID_X
     else:
@@ -1217,6 +1235,13 @@ def section_sheet(book, which):
                    (S.FL1 + S.CEIL_H, f"1층 반자 +{mm(S.FL1 + S.CEIL_H)}"), (S.FL1, f"1FL +{mm(S.FL1)}"),
                    (0, "GL ±0"), (S.FOOT_BOT, f"기초 하단 {mm(S.FOOT_BOT)}")):
         v.level(ru, z, lab, length=30)
+    return v
+
+
+def section_sheet(book, which):
+    no = "A-401" if which == "A" else "A-402"
+    sh = Sheet(book, no, f"단면도 {which}-{which}'", "1/50")
+    section_draw(sh, which)
     sh.heading(20, 398, f"단면도 {which}-{which}'", "1/50", num="1")
     key = "y = 11,000 위치에서 북측을 봄" if which == "A" else "x = 11,650 위치에서 서측을 봄 (계단 절단)"
     sh.text(30, 384, f"절단 위치: 평면도 {which}-{which}' ({key})", 2.2)
@@ -1348,15 +1373,15 @@ def struct_sheets(book):
 
 
 # ---------------------------------------------------------------- 상세
-def detail_sheet(book):
-    sh = Sheet(book, "A-501", "구조단면 상세", "1/20")
+def numbered(v, items, tx, ty0, step=5.2):
+    for i, ((u, z), s_) in enumerate(items):
+        v.leader(u, z, tx, ty0 - i * step, f"{i + 1}. {s_}", size=1.9)
 
-    def numbered(v, items, tx, ty0, step=5.2):
-        for i, ((u, z), s_) in enumerate(items):
-            v.leader(u, z, tx, ty0 - i * step, f"{i + 1}. {s_}", size=1.9)
 
+
+def detail_1(sh, o):
     # D1 기초·외벽·1층 바닥 (u = 외벽 바깥면에서 안쪽으로)
-    v = sh.view(70, 255, 20, u0=-0.5, v0=-1.25)
+    v = sh.view(*o, 20, u0=-0.5, v0=-1.25)
     v.rect(-0.5, -1.25, 1.3, 0, fc="#f3eee6", ec="none", hatch="\\\\\\", z=0.5)
     rc = [sbox(0, S.FOOT_BOT, S.FOOT_W, S.MAT_BOT), sbox(0, S.MAT_BOT, 1.3, S.MAT_TOP),
           sbox(O_RC0, S.MAT_TOP, S.WALL, 0.75)]
@@ -1387,10 +1412,13 @@ def detail_sheet(book):
                  ((0.9, S.MAT_BOT - 0.16), "잡석다짐 THK200"), ((-0.025, -0.5), "기초 외단열 XPS THK50"),
                  ((-0.06, -0.8), "도막방수 + 배수판 + 보호판")],
              v.P(1.3, 0)[0] + 8, v.P(0, 0.75)[1] + 8)
-    sh.heading(20, 398, "상세 1  기초·외벽·1층 바닥", "1/20", num="1")
 
+    return v
+
+
+def detail_2(sh, o):
     # D2 2층 바닥·외벽 (남측, 1층 거실창 W1 머리)
-    v = sh.view(345, 262, 20, u0=-0.4, v0=2.35)
+    v = sh.view(*o, 20, u0=-0.4, v0=2.35)
     zb = S.FL2 - S.SLAB
     w1 = [o for o in S.OPENINGS if o["id"] == "W1"][0]
     rc = [sbox(O_RC0, w1["z1"], S.WALL, 4.1), sbox(O_RC0, zb, 1.5, zb + S.SLAB_RC)]
@@ -1414,10 +1442,13 @@ def detail_sheet(book):
                  ((0.9, S.FL1 + S.CEIL_H + 0.01), "석고보드 9.5 2겹 + 도장 (천장)"),
                  ((1.35, 2.85), "경량철골 천장틀 (M-BAR)")],
              v.P(1.5, 0)[0] + 8, v.P(0, 4.1)[1] + 4)
-    sh.heading(300, 398, "상세 2  2층 바닥·외벽", "1/20", num="2")
 
+    return v
+
+
+def detail_3(sh, o):
     # D3 처마
-    v = sh.view(70, 70, 20, u0=-0.75, v0=5.55)
+    v = sh.view(*o, 20, u0=-0.75, v0=5.55)
     z_u = lambda u: S.TOP2 + u * S.ROOF_PITCH  # noqa: E731
     u_a, u_b = -S.EAVE, 1.4
 
@@ -1448,10 +1479,13 @@ def detail_sheet(book):
                  ((0.06, 5.9), "외벽 PF보드 → 지붕 단열과 연속 (열교 방지)"),
                  ((0.9, S.FL2 + S.CEIL_H + 0.01), "2층 천장: 석고보드 9.5 2겹")],
              v.P(u_b, 0)[0] + 8, v.P(0, 7.4)[1])
-    sh.heading(20, 200, "상세 3  처마", "1/20", num="3")
 
+    return v
+
+
+def detail_4(sh, o):
     # D4 테라스·파라펫·2층 문턱 (u = x)
-    v = sh.view(330, 70, 20, u0=1.2, v0=2.4)
+    v = sh.view(*o, 20, u0=1.2, v0=2.4)
     zt = 4.75
     x0 = S.TERRACE[0]
     z_s2b = S.FL2 - S.SLAB - S.TERRACE_DROP
@@ -1491,6 +1525,18 @@ def detail_sheet(book):
                  ((2.6, z_s2b + 0.09), "테라스 슬래브 S2 THK180"),
                  ((3.65, z_s1t - 0.4), "전이보 TG1 300x700")],
              v.P(4.3, 0)[0] + 8, v.P(0, zt)[1])
+    return v
+
+
+def detail_sheet(book):
+    sh = Sheet(book, "A-501", "구조단면 상세", "1/20")
+    detail_1(sh, (70, 255))
+    sh.heading(20, 398, "상세 1  기초·외벽·1층 바닥", "1/20", num="1")
+    detail_2(sh, (345, 262))
+    sh.heading(300, 398, "상세 2  2층 바닥·외벽", "1/20", num="2")
+    detail_3(sh, (70, 70))
+    sh.heading(20, 200, "상세 3  처마", "1/20", num="3")
+    detail_4(sh, (330, 70))
     sh.heading(300, 200, "상세 4  테라스·파라펫", "1/20", num="4")
     sh.save()
 

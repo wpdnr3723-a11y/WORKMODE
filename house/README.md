@@ -15,7 +15,9 @@ text-to-cad(build123d) 3D 모델과, 같은 설계값으로 만든 인허가·�
 | `house.py` | 3D 모델 (`cad run house.py`) |
 | `check.py` | 법규 검토 표 (`python3 check.py`) |
 | `drawings.py` | 도면 PDF 생성 (`uv run drawings.py`) |
-| `drawings/house_drawings.pdf` | A2 도면 15장 (A3 축소 출력 가능) |
+| `drawings/house_drawings.pdf` | A2 도면 15장 |
+| `drawings_a3.py` | 경일대 건축학부 A3 양식(`templates/kiu_a3_frame.pdf`)에 도면을 앉힘 (`uv run drawings_a3.py`) |
+| `drawings/house_drawings_A3.pdf` | A3 양식 도면 14장 (작성: 연제욱 20202672) |
 | `exports/house.glb`, `exports/house.step` | 3D 파일 (웹 뷰어 / CAD) |
 
 설계값을 `spec.py`에서 바꾸고 세 스크립트를 다시 돌리면 3D·도면·법규 검토가 함께 바뀝니다.
@@ -62,6 +64,8 @@ text-to-cad(build123d) 3D 모델과, 같은 설계값으로 만든 인허가·�
 | 계단 | 단높이 176.5 / 단너비 260 / 너비 1,000 mm | 200 이하 / 240 이상 / 600 이상 |
 | 난간 | 1,200 mm | 1,200 mm 이상 |
 | 내진 | 2층 → 구조안전 확인 대상 | 내진설계 적용 |
+| 담장 | 생울타리 H1,200 | 1.2 m 이하 투시형·생울타리 (산단 지침) |
+| 건축한계선 | 소로 전면, 도로에서 9.0 m | 대로 2 m / 중로 1 m (산단 지침) |
 
 ## 한계
 
@@ -77,4 +81,5 @@ text-to-cad(build123d) 3D 모델과, 같은 설계값으로 만든 인허가·�
 cad run house.py
 python3 check.py
 uv run drawings.py
+uv run drawings_a3.py
 ```
