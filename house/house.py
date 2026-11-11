@@ -1,8 +1,10 @@
 """2층 단독주택 + 대지 모델 (text-to-cad / build123d).
 
 좌표: X = 동(東), Y = 북(北), Z = 위. 모델 단위는 mm이고, 아래 치수는 m로 쓰고 M()으로 바꾼다.
-대지: 경기도 성남시 분당구 운중동(서판교 단독주택단지), 제1종전용주거지역·지구단위계획구역.
-     지번은 토지이음에서 확인해 채운다. 대지 형상은 대표 필지 15 m x 20 m (300 ㎡), 남측 6 m 도로로 가정.
+대지: 경북 경산시 진량읍 신제리·다문리 일원, 경산4일반산업단지 단독주택용지 (경일대 인근).
+     제1종일반주거지역, 건폐율 60 %, 용적률 180 %, 3층 이하 (산단 단독주택용지 기준).
+     86필지·약 25,000 ㎡ -> 필지 평균 약 290 ㎡. 필지 번호(지번)는 분양 필지도에서 확인해 채운다.
+     대지 형상은 평균 필지 14.5 m x 20 m (290 ㎡), 남측 6 m 도로로 가정.
 법규 검토 수치는 house/check.py가 이 파일의 상수로 계산한다.
 """
 
@@ -10,7 +12,7 @@ import build123d as bd
 from cad import model
 
 # ---------------------------------------------------------------- 치수 (m)
-LOT_W, LOT_D = 15.0, 20.0          # 대지 동서 x 남북
+LOT_W, LOT_D = 14.5, 20.0          # 대지 동서 x 남북
 ROAD_W = 6.0                       # 남측 도로 폭
 
 WALL = 0.30                        # 외벽 두께 (RC 200 + 단열·마감)
@@ -41,7 +43,7 @@ TREAD = 0.26
 STAIR_W = 1.0
 STAIR = (10.1, 13.62, 12.2, 16.7)  # 계단실 평면 범위 (x0, y0, x1, y1)
 
-PARKING = [(9.4, 0.8), (12.0, 0.8)]  # 주차 2대, 각 2.5 x 5.0 m (일반형)
+PARKING = [(9.3, 0.8), (11.8, 0.8)]  # 주차 2대, 각 2.5 x 5.0 m (일반형)
 PARK_W, PARK_D = 2.5, 5.0
 
 GARDEN = (0.5, 0.5, 8.9, 8.2)      # 앞마당 잔디·조경
@@ -224,8 +226,8 @@ def site():
     ground = tag(box(0, 0, -0.3, LOT_W, LOT_D, GL), "lot_300m2", "#cfc6b4")
     road = tag(box(-2, -ROAD_W, -0.32, LOT_W + 2, 0, -0.02), "road_6m", "#55585c")
     garden = tag(box(*GARDEN[:2], GL, *GARDEN[2:], GL + 0.02), "garden", "#7fae5a")
-    north_garden = tag(box(0.5, 17.4, GL, 14.5, 19.5, GL + 0.02), "north_garden", "#7fae5a")
-    pave = tag(box(9.2, 0, GL, 14.7, 8.9, GL + 0.03), "parking_pave", "#a7a49d")
+    north_garden = tag(box(0.8, 17.4, GL, LOT_W - 0.8, 19.2, GL + 0.02), "north_garden", "#7fae5a")
+    pave = tag(box(9.1, 0, GL, LOT_W - 0.05, 8.9, GL + 0.03), "parking_pave", "#a7a49d")
     lines = []
     for px, py in PARKING:
         for dx in (0, PARK_W):
@@ -238,7 +240,7 @@ def site():
         box(LOT_W - 0.6, 9.0, GL, LOT_W, LOT_D, 1.2),
     ]), "hedge_1200", "#5e8f45")
     trees = []
-    for x, y, h in [(1.6, 1.6, 4.0), (5.0, 1.4, 3.2), (1.4, 6.5, 3.6), (13.0, 18.5, 4.2), (3.0, 18.6, 3.8)]:
+    for x, y, h in [(1.6, 1.6, 4.0), (5.0, 1.4, 3.2), (1.4, 6.5, 3.6), (12.6, 18.4, 4.2), (3.0, 18.6, 3.8)]:
         trunk = bd.Pos(M(x), M(y), 0) * bd.Cylinder(120, M(h * 0.5), align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
         crown = bd.Pos(M(x), M(y), M(h * 0.65)) * bd.Sphere(M(h * 0.28))
         trees += [tag(trunk, "trunk", "#6b4a2b"), tag(crown, "crown", "#4f8a3c")]
@@ -266,7 +268,7 @@ def house():
             f = fills(b, ops, kind, f"{kind}s_{n}", color)
             if f is not None:
                 parts.append(f)
-    return bd.Compound(children=parts, label="house_seopangyo_unjung_300m2")
+    return bd.Compound(children=parts, label="house_gyeongsan4_jinryang_290m2")
 
 
 if __name__ == "__main__":
